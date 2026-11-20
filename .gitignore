@@ -1,0 +1,19 @@
+# File di configurazione e credenziali (NON COMMIFATTI MAI)
+.env
+*.env
+.env.local
+
+# Python Virtual Environments & Cache
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# File di sistema e IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
