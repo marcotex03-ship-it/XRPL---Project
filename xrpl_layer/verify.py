@@ -36,7 +36,7 @@ def get_client(testnet_url: Optional[str] = None) -> JsonRpcClient:
     return JsonRpcClient(url)
 
 
-def wallet_possiede_nft(
+def wallet_holds_nft(
     wallet_address: str,
     nft_id: str,
     client: Optional[JsonRpcClient] = None,
@@ -74,8 +74,8 @@ def wallet_possiede_nft(
         return False
 
 
-# English alias for consistency
-wallet_holds_nft = wallet_possiede_nft
+# Backward-compatible alias for team instructions
+wallet_possiede_nft = wallet_holds_nft
 
 
 def get_wallet_cards(
@@ -146,14 +146,14 @@ if __name__ == "__main__":
     # 2. Test positive verification if we have at least one card
     if fan_cards:
         valid_nft_id = fan_cards[0]["nft_id"]
-        is_owner = wallet_possiede_nft(fan_address, valid_nft_id)
+        is_owner = wallet_holds_nft(fan_address, valid_nft_id)
         print(f"\n[TEST 1 - Positive Check]")
         print(f"  Verifying genuine NFT: {valid_nft_id}")
         print(f"  Result: {'OWNERSHIP CONFIRMED (True)' if is_owner else 'FAILED (False)'}")
 
     # 3. Test negative verification with a random dummy NFT ID
     fake_nft_id = "0001000000000000000000000000000000000000000000000000000000000000"
-    is_fake_owner = wallet_possiede_nft(fan_address, fake_nft_id)
+    is_fake_owner = wallet_holds_nft(fan_address, fake_nft_id)
     print(f"\n[TEST 2 - Negative Check]")
     print(f"  Verifying fake NFT: {fake_nft_id}")
     print(f"  Result: {'REJECTED AS EXPECTED (False)' if not is_fake_owner else 'UNEXPECTED (True)'}")

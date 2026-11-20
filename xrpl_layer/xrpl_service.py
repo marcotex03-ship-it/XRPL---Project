@@ -38,7 +38,7 @@ from xrpl_layer.mint_and_send import (
     transfer_nft_to_fan,
     build_metadata_uri,
 )
-from xrpl_layer.verify import wallet_possiede_nft
+from xrpl_layer.verify import wallet_holds_nft, wallet_possiede_nft
 
 # Directory configuration
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -70,10 +70,10 @@ def _save_registry():
         print(f"[WARN] Failed to write card registry to disk: {e}")
 
 
-def emetti_card_per_fan(
+def issue_card_for_fan(
     fan_address: str,
     metadata_uri: str,
-    validita_giorni: int = 180,  # 6 months default validity
+    validity_days: int = 180,  # 6 months default validity
     fan_wallet: Optional[Wallet] = None,
 ) -> Dict[str, Any]:
     """
@@ -83,7 +83,7 @@ def emetti_card_per_fan(
     Args:
         fan_address: The classic XRPL address of the fan (starts with 'r...').
         metadata_uri: URI pointing to the card's visual and artist metadata.
-        validita_giorni: Duration in days before the card expires (default: 180 / 6 months).
+        validity_days: Duration in days before the card expires (default: 180 / 6 months).
         fan_wallet: Optional Fan Wallet instance. If omitted, loaded from .env.
 
     Returns:
@@ -107,7 +107,7 @@ def emetti_card_per_fan(
 
     # 3. Calculate timestamps for off-chain expiration
     now = datetime.now(timezone.utc)
-    expiry = now + timedelta(days=validita_giorni)
+    expiry = now + timedelta(days=validity_days)
 
     # 4. Register in off-chain database
     registry = _load_registry()
@@ -135,7 +135,7 @@ def emetti_card_per_fan(
     }
 
 
-def verifica_card_valida(
+def verify_card_validity(
     fan_address: str,
     nft_id: str,
 ) -> Tuple[bool, str]:
@@ -161,7 +161,7 @@ def verifica_card_valida(
     # Step 1: Check off-chain registry existence
     if not card_record:
         # Fallback: if not in local registry, check direct on-chain ownership
-        is_on_chain_owner = wallet_possiede_nft(fan_address, nft_id)
+        is_on_chain_owner = wallet_holds_nft(fan_address, nft_id)
         if is_on_chain_owner:
             return True, "Valid on-chain (No off-chain restriction found)"
         return False, "Card not found in registry and not owned on-chain"
@@ -181,14 +181,14 @@ def verifica_card_valida(
             return False, f"Card expired on {expiry_str}"
 
     # Step 4: Check real-time on-chain ownership
-    is_owner = wallet_possiede_nft(fan_address, nft_id)
+    is_owner = wallet_holds_nft(fan_address, nft_id)
     if not is_owner:
         return False, "On-chain verification failed: Fan does not hold this NFT"
 
     return True, "Card is valid, active, and verified on-chain"
 
 
-def riscatta_e_brucia_card(
+def redeem_and_burn_card(
     fan_address: str,
     nft_id: str,
     vendor_id: str = "Partner_Store",
@@ -211,7 +211,7 @@ def riscatta_e_brucia_card(
         Dict containing redemption status, burn transaction hash, and discount approval.
     """
     # 1. Verify card first
-    is_valid, reason = verifica_card_valida(fan_address, nft_id)
+    is_valid, reason = verify_card_validity(fan_address, nft_id)
     if not is_valid:
         return {
             "success": False,
@@ -267,10 +267,10 @@ def riscatta_e_brucia_card(
     }
 
 
-# English aliases for compatibility
-issue_card_for_fan = emetti_card_per_fan
-verify_card_validity = verifica_card_valida
-redeem_and_burn_card = riscatta_e_brucia_card
+# Backward-compatible aliases for Italian prompt naming
+emetti_card_per_fan = issue_card_for_fan
+verifica_card_valida = verify_card_validity
+riscatta_e_brucia_card = redeem_and_burn_card
 
 
 if __name__ == "__main__":
@@ -284,10 +284,10 @@ if __name__ == "__main__":
     # 1. Issue a new Card for the fan
     metadata_link = "https://api.musicfancard.io/metadata/arctic_monkeys_top1_demo.json"
     print("\n[STEP 1] Issuing a new Fan Card...")
-    issue_result = emetti_card_per_fan(
+    issue_result = issue_card_for_fan(
         fan_address=fan_addr,
         metadata_uri=metadata_link,
-        validita_giorni=180,  # 6 months
+        validity_days=180,  # 6 months
     )
     test_nft_id = issue_result["nft_id"]
     print(f"Issued Card NFT ID: {test_nft_id}")
@@ -295,12 +295,12 @@ if __name__ == "__main__":
 
     # 2. Verify validity (should be True)
     print("\n[STEP 2] Verifying card validity before redemption...")
-    is_valid, reason = verifica_card_valida(fan_addr, test_nft_id)
+    is_valid, reason = verify_card_validity(fan_addr, test_nft_id)
     print(f"Is Valid: {is_valid} | Reason: {reason}")
 
     # 3. Simulate vendor redemption (TicketOne discount -> Burn NFT)
     print("\n[STEP 3] Fan visits TicketOne to claim a 10% discount...")
-    redemption = riscatta_e_brucia_card(
+    redemption = redeem_and_burn_card(
         fan_address=fan_addr,
         nft_id=test_nft_id,
         vendor_id="TicketOne",
@@ -311,7 +311,7 @@ if __name__ == "__main__":
 
     # 4. Verify validity again (should be False: already redeemed & burned)
     print("\n[STEP 4] Verifying card validity after redemption...")
-    is_valid_after, reason_after = verifica_card_valida(fan_addr, test_nft_id)
+    is_valid_after, reason_after = verify_card_validity(fan_addr, test_nft_id)
     print(f"Is Valid: {is_valid_after} | Reason: {reason_after}")
 
     print("\n" + "=" * 65)
