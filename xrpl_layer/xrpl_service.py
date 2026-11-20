@@ -5,7 +5,7 @@ High-level service module connecting the XRPL blockchain layer with the backend.
 
 Key Capabilities:
 1. `emetti_card_per_fan`: Mints a Soulbound NFT Card, transfers it to the fan's
-   wallet on-chain, and registers an off-chain expiration date (e.g., 365 or 30 days).
+   wallet on-chain, and registers an off-chain expiration date (6 months / 180 days).
 2. `verifica_card_valida`: Dual verification: checks on-chain possession on XRPL
    AND off-chain validity (not expired, not already redeemed).
 3. `riscatta_e_brucia_card`: When a fan uses the discount at a vendor, executes
@@ -73,17 +73,17 @@ def _save_registry():
 def emetti_card_per_fan(
     fan_address: str,
     metadata_uri: str,
-    validita_giorni: int = 365,
+    validita_giorni: int = 180,  # 6 months default validity
     fan_wallet: Optional[Wallet] = None,
 ) -> Dict[str, Any]:
     """
     Mints a Soulbound NFT Card, delivers it to the fan's wallet,
-    and registers an off-chain expiration date.
+    and registers an off-chain expiration date (defaults to 6 months / 180 days).
 
     Args:
         fan_address: The classic XRPL address of the fan (starts with 'r...').
         metadata_uri: URI pointing to the card's visual and artist metadata.
-        validita_giorni: Duration in days before the card expires (default: 365).
+        validita_giorni: Duration in days before the card expires (default: 180 / 6 months).
         fan_wallet: Optional Fan Wallet instance. If omitted, loaded from .env.
 
     Returns:
@@ -286,8 +286,8 @@ if __name__ == "__main__":
     print("\n[STEP 1] Issuing a new Fan Card...")
     issue_result = emetti_card_per_fan(
         fan_address=fan_addr,
-        metadata_uri=metadata_link,
-        validita_giorni=30,
+        metadata_link,
+        validita_giorni=180,  # 6 months
     )
     test_nft_id = issue_result["nft_id"]
     print(f"Issued Card NFT ID: {test_nft_id}")
