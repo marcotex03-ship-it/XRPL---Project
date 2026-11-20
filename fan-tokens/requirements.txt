@@ -1,0 +1,8 @@
+xrpl-py>=3.0.0
+fastapi
+uvicorn
+sqlalchemy>=2.0
+httpx
+authlib
+python-dotenv
+pytest
