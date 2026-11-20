@@ -286,7 +286,7 @@ if __name__ == "__main__":
     print("\n[STEP 1] Issuing a new Fan Card...")
     issue_result = emetti_card_per_fan(
         fan_address=fan_addr,
-        metadata_link,
+        metadata_uri=metadata_link,
         validita_giorni=180,  # 6 months
     )
     test_nft_id = issue_result["nft_id"]
