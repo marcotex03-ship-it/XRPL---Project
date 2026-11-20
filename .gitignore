@@ -1,4 +1,4 @@
-# File di configurazione e credenziali (NON COMMIFATTI MAI)
+# Environment variables and secrets (NEVER COMMIT)
 .env
 *.env
 .env.local
@@ -12,7 +12,7 @@ __pycache__/
 *.pyo
 *.pyd
 
-# File di sistema e IDE
+# Operating System & IDE files
 .vscode/
 .idea/
 .DS_Store
