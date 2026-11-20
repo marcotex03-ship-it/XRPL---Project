@@ -12,6 +12,10 @@ __pycache__/
 *.pyo
 *.pyd
 
+# Local Runtime Data & Databases
+cards_registry.json
+*.jsonl
+
 # Operating System & IDE files
 .vscode/
 .idea/
