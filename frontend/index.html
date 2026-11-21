@@ -241,7 +241,7 @@
         <div class="fs-4 mb-1">🎟️</div>
         <div class="fw-bold text-dark mb-1">Nessuna card NFT disponibile nel pool</div>
         <p class="mb-2 text-muted" style="font-size: 0.8rem;">
-          Sei idoneo come Top Fan, ma l'amministratore non ha ancora generato/mintato le card nel pool per i tuoi artisti.
+          Sei idoneo come Top Fan, ma hai già usufruito delle tue card.
         </p>
         <a href="/admin" class="btn btn-sm btn-outline-dark rounded-pill fw-bold px-3">
           Vai al Pannello Admin ⚙️
@@ -561,9 +561,9 @@
           step4.className = "text-success fw-semibold";
           step4.innerHTML = `✔ ${dati.artists.length} carte accreditate al wallet ${activeUserWallet.substring(0, 6)}...`;
         } else {
-          progressTitle.innerText = "Verifica completata (Pool non pronto)";
+          progressTitle.innerText = "Verifica completata";
           step4.className = "text-warning fw-semibold";
-          step4.innerHTML = `⚠️ Nessun NFT disponibile nel pool (richiede mint dall'Admin)`;
+          step4.innerHTML = `⚠️ Sei idoneo come Top Fan, ma hai già usufruito delle tue card.`;
         }
 
         await new Promise(r => setTimeout(r, 600));

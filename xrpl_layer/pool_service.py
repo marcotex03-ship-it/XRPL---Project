@@ -154,7 +154,7 @@ def claim_card_from_pool(
     target_address = fan_address or os.getenv("FAN_ADDRESS")
     pool = _load_pool()
 
-    # 1. Check if the fan already holds an assigned card for this artist
+    # 1. Check if the fan already holds an active (ASSIGNED) card for this artist
     for card in pool:
         if (
             card.get("artist") == artist_name
@@ -172,10 +172,28 @@ def claim_card_from_pool(
                 "source": "pool",
             }
 
-    # 2. Look for an available card for this artist with status AVAILABLE
+    # 2. Check if the fan has already REDEEMED (used) a card for this artist
+    redeemed_cards = [
+        card for card in pool
+        if card.get("artist") == artist_name
+        and card.get("assigned_to") == fan_username
+        and card.get("status") == "REDEEMED"
+    ]
+
+    last_redeemed_created_at = None
+    if redeemed_cards:
+        # Find the creation timestamp of the latest card the user already redeemed
+        last_redeemed_created_at = max(c.get("created_at", "") for c in redeemed_cards)
+
+    # 3. Look for an available card for this artist with status AVAILABLE
+    # If the user already redeemed a card for this artist, only a card from a NEW mint
+    # (created_at > last_redeemed_created_at) can be assigned!
     available_card = None
     for card in pool:
         if card.get("artist") == artist_name and card.get("status") == "AVAILABLE":
+            if last_redeemed_created_at and card.get("created_at", "") <= last_redeemed_created_at:
+                # Same batch: user has already used their card for this cycle
+                continue
             available_card = card
             break
 
@@ -200,8 +218,10 @@ def claim_card_from_pool(
             "source": "pool",
         }
     else:
-        # No pre-minted card in AVAILABLE status: do NOT mint dynamically
-        print(f"[POOL] Nessuna carta AVAILABLE trovata nel pool per '{artist_name}'. Richiede prima il mint dall'Admin.")
+        if redeemed_cards:
+            print(f"[POOL] L'utente '{fan_username}' ha già usufruito della card per '{artist_name}'. Nessun nuovo mint successivo disponibile.")
+        else:
+            print(f"[POOL] Nessuna carta AVAILABLE trovata nel pool per '{artist_name}'. Richiede prima il mint dall'Admin.")
         return None
 
 

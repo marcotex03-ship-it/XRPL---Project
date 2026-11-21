@@ -180,6 +180,26 @@ def connect_fan(
     fan_wallet = matched_user.get("wallet_address", default_fan_wallet) if matched_user else default_fan_wallet
 
     current_cards = USER_CARDS_DB.get(username, [])
+    # Sincronizza con il pool persistente per le carte già assegnate a questo utente
+    pool = _load_pool()
+    assigned_in_pool = [
+        c for c in pool
+        if c.get("assigned_to") == username and c.get("status") == "ASSIGNED"
+    ]
+    for c in assigned_in_pool:
+        if not any(x["name"] == c.get("artist") for x in current_cards):
+            artist_name = c.get("artist")
+            current_cards.append({
+                "name": artist_name,
+                "percentage": c.get("percentage", 1.0),
+                "streams": ARTISTS_DB.get(artist_name, {}).get("listeners_in_percentile", 1500),
+                "pool_size": ARTISTS_DB.get(artist_name, {}).get("listeners_in_percentile", 2000),
+                "nft_id": c.get("nft_id"),
+                "explorer_url": c.get("explorer_url", "https://testnet.xrpscan.com"),
+                "expiry_date": c.get("expiry_date", "2027-05-21T00:00:00"),
+                "wallet": fan_wallet,
+            })
+
     already_owned_artists = {c["name"] for c in current_cards}
 
     for entry, is_eligible in zip(streamed_artists, is_top_vector):
@@ -190,7 +210,7 @@ def connect_fan(
             if artist_name in already_owned_artists:
                 continue
 
-            # Assegna la carta dal pool SOLO se in stato AVAILABLE (pre-mintata dall'admin)
+            # Assegna la carta dal pool SOLO se in stato AVAILABLE e l'utente non ne ha già usufruito
             card_data = claim_card_from_pool(
                 artist_name=artist_name,
                 fan_username=username,
@@ -209,7 +229,7 @@ def connect_fan(
                     "wallet": fan_wallet,
                 })
             else:
-                print(f"[POOL] '{artist_name}' idoneo su Spotify, ma nessun NFT disponibile nel pool. Richiede prima il mint dall'Admin.")
+                print(f"[POOL] '{artist_name}': carta non assegnata (pool vuoto o già usufruita).")
 
     USER_CARDS_DB[username] = current_cards
 
@@ -256,6 +276,7 @@ def redeem_card(req: RedeemRequest):
             c["status"] = "REDEEMED"
             c["redeemed_vendor"] = req.perk_type
             c["burn_tx_hash"] = burn_tx_hash
+            c["redeemed_at"] = datetime.now(timezone.utc).isoformat()
     _save_pool(pool)
 
     # Remove card from user's active collection
