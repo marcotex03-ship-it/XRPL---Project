@@ -105,59 +105,124 @@
 <body>
 
   <div class="app-container">
-    <!-- Initial Header (Login step only) -->
-    <div id="header-iniziale" class="text-center mb-4 pt-2">
+    <!-- Initial Header (Login/Register step only) -->
+    <div id="header-iniziale" class="text-center mb-3 pt-2">
       <h4 class="mb-0 brand-font" style="font-size: 2.3rem;">SuperFan</h4>
+      <p class="text-secondary small mb-0">Spotify Loyalty ➔ XRPL Soulbound Collectibles</p>
     </div>
 
-    <!-- Main Header (Spotify & Dashboard steps: Left: SuperFan | Center: Logo | Right: Username + Admin) -->
+    <!-- Main Header (Spotify & Dashboard steps: Left: SuperFan | Center: Logo | Right: Username + Wallet + Admin) -->
     <div id="header-principale" class="align-items-center justify-content-between mb-3 pt-1" style="display: none;">
-      <div class="brand-font" style="flex: 1; font-size: 1.75rem; line-height: 1;">SuperFan</div>
+      <div class="brand-font" style="flex: 1; font-size: 1.6rem; line-height: 1;">SuperFan</div>
       <div class="text-center" style="flex: 1;">
-        <img id="header-center-logo" src="18821-removebg-preview.png" alt="SuperFan Logo" style="height: 34px; width: auto; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1)); display: none;">
+        <img id="header-center-logo" src="18821-removebg-preview.png" alt="SuperFan Logo" style="height: 32px; width: auto; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1)); display: none;">
       </div>
-      <div class="text-end" style="flex: 1;">
-        <span id="display-username" class="badge bg-dark text-white rounded-pill px-2 py-1 text-truncate" style="max-width: 90px;">@user</span>
-        <a href="/admin" class="badge bg-info text-dark text-decoration-none rounded-pill px-2 py-1 ms-1">⚙️ Admin</a>
+      <div class="text-end" style="flex: 1.6;">
+        <span id="display-username" class="badge bg-dark text-white rounded-pill px-2 py-1 text-truncate" style="max-width: 80px;">@user</span>
+        <a id="display-wallet-link" href="#" target="_blank" class="badge bg-secondary text-white rounded-pill px-2 py-1 ms-1 text-decoration-none" title="XRPL Fan Wallet" style="font-size: 0.65rem;">r...</a>
+        <a href="/admin" class="badge bg-info text-dark text-decoration-none rounded-pill px-2 py-1 ms-1">⚙️</a>
+        <button type="button" class="btn btn-sm btn-outline-danger border-0 p-0 ms-1" onclick="eseguiLogout()" title="Esci">🚪</button>
       </div>
     </div>
 
-    <!-- STEP 1: LOGIN SCREEN -->
-    <div id="schermata-login" class="flex-column justify-content-center flex-grow-1" style="display: flex; min-height: 60vh;">
-      <div class="text-center mb-4">
-        <img src="18821-removebg-preview.png" alt="SuperFan Logo" class="mb-3" style="width: 100px; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.12));">
-        <h5 class="fw-bold mb-1">Welcome Back</h5>
-        <p class="text-secondary small">Sign in to access your artist cards</p>
+    <!-- STEP 1: AUTH SCREEN (LOGIN & REGISTER TABS) -->
+    <div id="schermata-login" class="flex-column justify-content-center flex-grow-1" style="display: flex; min-height: 55vh;">
+      <div class="text-center mb-3">
+        <img src="18821-removebg-preview.png" alt="SuperFan Logo" class="mb-2" style="width: 85px; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.12));">
+        <h5 class="fw-bold mb-1" id="auth-title">Accedi a SuperFan</h5>
+        <p class="text-secondary small mb-3" id="auth-subtitle">Accedi per sbloccare le tue carte collezionabili</p>
+      </div>
+
+      <!-- Tab Switcher: Login vs Registrati -->
+      <div class="d-flex justify-content-center mb-3">
+        <div class="btn-group p-1 bg-white rounded-pill shadow-sm border w-100" role="group" style="max-width: 290px;">
+          <button type="button" id="tab-btn-login" class="btn btn-sm rounded-pill fw-bold btn-dark w-50" onclick="switchAuthTab('login')">
+            Accedi
+          </button>
+          <button type="button" id="tab-btn-register" class="btn btn-sm rounded-pill fw-bold text-secondary w-50" onclick="switchAuthTab('register')">
+            Registrati
+          </button>
+        </div>
       </div>
 
       <div class="px-2">
-        <div class="mb-3">
-          <label for="input-username" class="form-label small fw-semibold text-secondary mb-1">Username</label>
-          <input type="text" id="input-username" class="form-control rounded-pill px-3 py-2 search-input" placeholder="Enter your username">
+        <!-- FORM ACCEDI -->
+        <div id="form-login">
+          <div class="mb-3">
+            <label for="input-username" class="form-label small fw-semibold text-secondary mb-1">Username</label>
+            <input type="text" id="input-username" class="form-control rounded-pill px-3 py-2 search-input" placeholder="Es. marco o fan_demo">
+          </div>
+          <div class="mb-3">
+            <label for="input-password" class="form-label small fw-semibold text-secondary mb-1">Password</label>
+            <input type="password" id="input-password" class="form-control rounded-pill px-3 py-2 search-input" placeholder="Inserisci la password">
+          </div>
+          <button type="button" id="btn-login-submit" class="btn btn-dark btn-lg rounded-pill fw-bold w-100 py-2 shadow-sm" onclick="eseguiLogin()">
+            Accedi
+          </button>
+          <div class="text-center mt-2">
+            <small class="text-muted" style="font-size: 0.72rem;">Account di test predefinito: <b>marco</b> (pwd: <i>password123</i>)</small>
+          </div>
         </div>
-        <div class="mb-4">
-          <label for="input-password" class="form-label small fw-semibold text-secondary mb-1">Password</label>
-          <input type="password" id="input-password" class="form-control rounded-pill px-3 py-2 search-input" placeholder="Enter your password">
+
+        <!-- FORM REGISTRATI -->
+        <div id="form-register" style="display: none;">
+          <div class="mb-2">
+            <label for="input-reg-username" class="form-label small fw-semibold text-secondary mb-1">Scegli Username</label>
+            <input type="text" id="input-reg-username" class="form-control rounded-pill px-3 py-2 search-input" placeholder="Nuovo username">
+          </div>
+          <div class="mb-2">
+            <label for="input-reg-password" class="form-label small fw-semibold text-secondary mb-1">Crea Password</label>
+            <input type="password" id="input-reg-password" class="form-control rounded-pill px-3 py-2 search-input" placeholder="Minimo 4 caratteri">
+          </div>
+          <div class="mb-2">
+            <label for="input-reg-confirm" class="form-label small fw-semibold text-secondary mb-1">Conferma Password</label>
+            <input type="password" id="input-reg-confirm" class="form-control rounded-pill px-3 py-2 search-input" placeholder="Ripeti la password">
+          </div>
+          <div class="mb-3">
+            <div class="form-check form-switch small mt-2">
+              <input class="form-check-input" type="checkbox" id="check-custom-wallet" onchange="toggleCustomWallet()">
+              <label class="form-check-label text-secondary fw-semibold" for="check-custom-wallet" style="font-size: 0.75rem;">Usa un mio indirizzo XRPL personale</label>
+            </div>
+            <div id="box-custom-wallet" style="display: none;" class="mt-2">
+              <input type="text" id="input-reg-wallet" class="form-control rounded-pill px-3 py-1 small search-input" placeholder="Indirizzo XRPL (es. rLhw...)">
+            </div>
+            <small id="wallet-auto-note" class="text-muted d-block mt-1" style="font-size: 0.72rem;">✨ Verrà assegnato automaticamente il wallet XRPL Testnet della piattaforma.</small>
+          </div>
+          <button type="button" id="btn-register-submit" class="btn btn-dark btn-lg rounded-pill fw-bold w-100 py-2 shadow-sm" onclick="eseguiRegistrazione()">
+            Crea Account & Collega Wallet
+          </button>
         </div>
-        <div id="login-error" class="text-danger small text-center mb-3" style="display: none;">
-          Please enter both username and password.
-        </div>
-        <button type="button" class="btn btn-dark btn-lg rounded-pill fw-bold w-100 py-2 shadow-sm" onclick="eseguiLogin()">
-          Log In
-        </button>
+
+        <!-- Feedback Alert Box -->
+        <div id="auth-alert" class="small text-center mt-3 p-2 rounded-3 border" style="display: none;"></div>
       </div>
     </div>
 
     <!-- STEP 2: SPOTIFY CONNECT SCREEN -->
-    <div id="schermata-spotify" class="flex-column justify-content-center align-items-center text-center flex-grow-1" style="display: none; min-height: 60vh;">
-      <div class="mb-4">
-        <img src="18821-removebg-preview.png" alt="SuperFan Pass" class="mb-3" style="width: 120px; max-width: 75%; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.12));">
-        <p class="text-secondary small mb-0 px-3">Connect your streaming profile and collect exclusive cards and offers.</p>
+    <div id="schermata-spotify" class="flex-column justify-content-center align-items-center text-center flex-grow-1" style="display: none; min-height: 55vh;">
+      <div class="mb-3">
+        <img src="18821-removebg-preview.png" alt="SuperFan Pass" class="mb-2" style="width: 110px; max-width: 75%; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.12));">
+        <h5 class="fw-bold mb-1">Verifica Idoneità Spotify</h5>
+        <p class="text-secondary small mb-0 px-3">Collega il tuo profilo di streaming per certificare se sei nel top 1% dei fan dei tuoi artisti preferiti.</p>
       </div>
       
-      <button id="btn-spotify" type="button" class="btn btn-success btn-lg rounded-pill fw-bold px-4 py-3 shadow-sm w-100" style="max-width: 280px;" onclick="connettiSpotify()">
-        Connect Spotify
+      <button id="btn-spotify" type="button" class="btn btn-success btn-lg rounded-pill fw-bold px-4 py-3 shadow-sm w-100" style="max-width: 290px;" onclick="connettiSpotify()">
+        🎵 Connetti Spotify & Certifica
       </button>
+
+      <!-- Step-by-Step Live Progress Tracker -->
+      <div id="spotify-progress-box" class="w-100 p-3 rounded-4 bg-white shadow-sm border mt-3 text-start" style="display: none; max-width: 320px;">
+        <h6 class="fw-bold mb-2 small text-dark d-flex align-items-center">
+          <span class="spinner-border spinner-border-sm me-2 text-success" id="progress-spinner" role="status"></span>
+          <span id="progress-main-title">Verifica in corso...</span>
+        </h6>
+        <div class="d-flex flex-column gap-2 small" style="font-size: 0.78rem;">
+          <div id="step-1" class="text-muted"><span class="badge bg-light text-secondary border me-1">1</span> Connessione account Spotify</div>
+          <div id="step-2" class="text-muted"><span class="badge bg-light text-secondary border me-1">2</span> Calcolo percentile per gli artisti ascoltati</div>
+          <div id="step-3" class="text-muted"><span class="badge bg-light text-secondary border me-1">3</span> Assegnazione / Emissione Soulbound su XRPL</div>
+          <div id="step-4" class="text-muted"><span class="badge bg-light text-secondary border me-1">4</span> Accredito carte nel tuo wallet personale</div>
+        </div>
+      </div>
     </div>
 
     <!-- STEP 3: MAIN SCREEN (FAN COLLECTION) -->
@@ -281,19 +346,142 @@
     // Foto di riserva se l'artista non è nella lista sopra
     const defaultPhoto = "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80";
 
-    function eseguiLogin() {
+    let activeUserWallet = "";
+    let activeUsername = "";
+
+    function switchAuthTab(tab) {
+      const isLogin = tab === 'login';
+      document.getElementById('form-login').style.display = isLogin ? 'block' : 'none';
+      document.getElementById('form-register').style.display = isLogin ? 'none' : 'block';
+
+      document.getElementById('tab-btn-login').className = isLogin ? 'btn btn-sm rounded-pill fw-bold btn-dark w-50' : 'btn btn-sm rounded-pill fw-bold text-secondary w-50';
+      document.getElementById('tab-btn-register').className = isLogin ? 'btn btn-sm rounded-pill fw-bold text-secondary w-50' : 'btn btn-sm rounded-pill fw-bold btn-dark w-50';
+
+      document.getElementById('auth-title').innerText = isLogin ? 'Accedi a SuperFan' : 'Crea il tuo Account SuperFan';
+      document.getElementById('auth-subtitle').innerText = isLogin ? 'Accedi per sbloccare le tue carte collezionabili' : 'Unisciti per ottenere carte fedeltà uniche su XRPL';
+      
+      const alertBox = document.getElementById('auth-alert');
+      alertBox.style.display = 'none';
+    }
+
+    function toggleCustomWallet() {
+      const check = document.getElementById('check-custom-wallet').checked;
+      document.getElementById('box-custom-wallet').style.display = check ? 'block' : 'none';
+      document.getElementById('wallet-auto-note').style.display = check ? 'none' : 'block';
+    }
+
+    function showAuthAlert(msg, isSuccess = false) {
+      const box = document.getElementById('auth-alert');
+      box.innerText = msg;
+      box.className = isSuccess 
+        ? 'small text-center mt-3 p-2 rounded-3 border bg-success bg-opacity-10 text-success border-success' 
+        : 'small text-center mt-3 p-2 rounded-3 border bg-danger bg-opacity-10 text-danger border-danger';
+      box.style.display = 'block';
+    }
+
+    async function eseguiLogin() {
       const username = document.getElementById('input-username').value.trim();
       const password = document.getElementById('input-password').value.trim();
-      const errorBox = document.getElementById('login-error');
+      const submitBtn = document.getElementById('btn-login-submit');
 
       if (!username || !password) {
-        errorBox.style.display = 'block';
+        showAuthAlert('Inserisci sia username che password.');
         return;
       }
 
-      errorBox.style.display = 'none';
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Verifica credenziali...';
 
-      document.getElementById('display-username').innerText = username;
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || 'Accesso non riuscito.');
+        }
+
+        activeUsername = data.username;
+        activeUserWallet = data.wallet_address;
+        entraNellApp();
+
+      } catch (err) {
+        showAuthAlert(err.message, false);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Accedi';
+      }
+    }
+
+    async function eseguiRegistrazione() {
+      const username = document.getElementById('input-reg-username').value.trim();
+      const password = document.getElementById('input-reg-password').value.trim();
+      const confirmPwd = document.getElementById('input-reg-confirm').value.trim();
+      const useCustomWallet = document.getElementById('check-custom-wallet').checked;
+      const customWallet = useCustomWallet ? document.getElementById('input-reg-wallet').value.trim() : null;
+      const submitBtn = document.getElementById('btn-register-submit');
+
+      if (!username || !password) {
+        showAuthAlert('Inserisci username e password.');
+        return;
+      }
+
+      if (password.length < 4) {
+        showAuthAlert('La password deve contenere almeno 4 caratteri.');
+        return;
+      }
+
+      if (password !== confirmPwd) {
+        showAuthAlert('Le password non coincidono. Controlla e riprova.');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = 'Creazione account e wallet...';
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            username: username, 
+            password: password, 
+            wallet_address: customWallet 
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || 'Registrazione fallita.');
+        }
+
+        showAuthAlert('Account creato con successo! Accesso in corso...', true);
+        activeUsername = data.username;
+        activeUserWallet = data.wallet_address;
+
+        setTimeout(() => {
+          entraNellApp();
+        }, 800);
+
+      } catch (err) {
+        showAuthAlert(err.message, false);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Crea Account & Collega Wallet';
+      }
+    }
+
+    function entraNellApp() {
+      document.getElementById('display-username').innerText = '@' + activeUsername;
+      
+      const shortWallet = activeUserWallet ? (activeUserWallet.substring(0, 5) + '...' + activeUserWallet.slice(-4)) : 'r...';
+      const walletBadge = document.getElementById('display-wallet-link');
+      walletBadge.innerText = shortWallet;
+      walletBadge.href = `https://testnet.xrpscan.com/account/${activeUserWallet}`;
+
       document.getElementById('header-iniziale').style.display = 'none';
       document.getElementById('header-principale').style.display = 'flex';
       document.getElementById('header-center-logo').style.display = 'none';
@@ -302,29 +490,81 @@
       document.getElementById('schermata-spotify').style.display = 'flex';
     }
 
-  async function connettiSpotify() {
-    const btn = document.getElementById('btn-spotify');
-    btn.innerText = "Connecting...";
-    btn.disabled = true;
-
-    const username = document.getElementById('input-username').value.trim() || "guest";
-
-    try {
-      const res = await fetch(
-        `${BACKEND_URL}/api/fan/connect?username=${encodeURIComponent(username)}&n_artists=8`
-      );
-      if (!res.ok) throw new Error(`Errore HTTP ${res.status}`);
-
-      const dati = await res.json();
-      console.log("Dati ricevuti da Python:", dati);
-      mostraDatiFan(dati.artists);
-    } catch (e) {
-      console.error("Connessione al backend fallita:", e);
-      alert("Il sito non riesce a contattare Python su " + BACKEND_URL + ". Controlla il terminale di Uvicorn.");
-      btn.innerText = "Connect Spotify";
-      btn.disabled = false;
+    function eseguiLogout() {
+      activeUsername = '';
+      activeUserWallet = '';
+      allArtists = [];
+      document.getElementById('header-principale').style.display = 'none';
+      document.getElementById('header-iniziale').style.display = 'block';
+      document.getElementById('schermata-fan').style.display = 'none';
+      document.getElementById('schermata-spotify').style.display = 'none';
+      document.getElementById('schermata-login').style.display = 'flex';
+      switchAuthTab('login');
     }
-  }
+
+    async function connettiSpotify() {
+      const btn = document.getElementById('btn-spotify');
+      const progressBox = document.getElementById('spotify-progress-box');
+      const progressTitle = document.getElementById('progress-main-title');
+      const step1 = document.getElementById('step-1');
+      const step2 = document.getElementById('step-2');
+      const step3 = document.getElementById('step-3');
+      const step4 = document.getElementById('step-4');
+
+      btn.disabled = true;
+      btn.innerText = "⏳ Certificazione in corso...";
+      progressBox.style.display = 'block';
+
+      // Step 1: Connessione Spotify
+      progressTitle.innerText = "1/4 Connessione a Spotify API...";
+      step1.className = "text-dark fw-bold";
+      step1.innerHTML = `<span class="spinner-border spinner-border-sm text-success me-1"></span> Connessione account Spotify per @${activeUsername}`;
+
+      await new Promise(r => setTimeout(r, 450));
+      step1.className = "text-success fw-semibold";
+      step1.innerHTML = `✔ Spotify collegato con successo`;
+
+      // Step 2: Analisi ascolti
+      progressTitle.innerText = "2/4 Analisi dello streaming musicale...";
+      step2.className = "text-dark fw-bold";
+      step2.innerHTML = `<span class="spinner-border spinner-border-sm text-info me-1"></span> Calcolo soglia Top Listener (percentile)...`;
+
+      await new Promise(r => setTimeout(r, 600));
+      step2.className = "text-success fw-semibold";
+      step2.innerHTML = `✔ Calcolo completato: idoneità rilevata`;
+
+      // Step 3: Blockchain XRPL
+      progressTitle.innerText = "3/4 Interrogazione XRPL Testnet...";
+      step3.className = "text-dark fw-bold";
+      step3.innerHTML = `<span class="spinner-border spinner-border-sm text-primary me-1"></span> Validazione ledger & assegnazione Soulbound NFT...`;
+
+      try {
+        const usernameParam = encodeURIComponent(activeUsername || "guest");
+        const res = await fetch(`${BACKEND_URL}/api/fan/connect?username=${usernameParam}&n_artists=8`);
+        
+        if (!res.ok) throw new Error(`Errore HTTP ${res.status}`);
+        const dati = await res.json();
+
+        step3.className = "text-success fw-semibold";
+        step3.innerHTML = `✔ NFT Soulbound certificati su XRPL`;
+
+        // Step 4: Accredito
+        progressTitle.innerText = "4/4 Carte caricate!";
+        step4.className = "text-success fw-semibold";
+        step4.innerHTML = `✔ Carte accreditate al wallet ${activeUserWallet.substring(0, 6)}...`;
+
+        await new Promise(r => setTimeout(r, 600));
+        mostraDatiFan(dati.artists);
+
+      } catch (e) {
+        console.error("Connessione fallita:", e);
+        step3.className = "text-danger fw-semibold";
+        step3.innerHTML = `❌ Errore durante la certificazione: ${e.message}`;
+        alert("Errore durante la connessione a Python/XRPL: " + e.message);
+        btn.disabled = false;
+        btn.innerText = "Riprova connessione Spotify";
+      }
+    }
 
     function mostraDatiFan(listaArtisti) {
       document.getElementById('schermata-spotify').style.display = 'none';

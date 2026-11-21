@@ -1,7 +1,10 @@
 import os
 import sys
+import json
+import hashlib
 import random
 import string
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Query, BackgroundTasks
@@ -17,6 +20,32 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 load_dotenv(ROOT_DIR / ".env")
+
+USERS_FILE = ROOT_DIR / "users.json"
+
+
+def _load_users() -> dict:
+    if USERS_FILE.exists():
+        try:
+            with open(USERS_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return {}
+    return {}
+
+
+def _save_users(users: dict):
+    try:
+        with open(USERS_FILE, "w", encoding="utf-8") as f:
+            json.dump(users, f, indent=2)
+    except Exception as e:
+        print(f"[WARN] Failed to write users to disk: {e}")
+
+
+class AuthRequest(BaseModel):
+    username: str
+    password: str
+    wallet_address: Optional[str] = None
 
 from simulator.simulate_spotify import (
     ARTISTS_DB,
@@ -63,6 +92,68 @@ class PoolGenerateRequest(BaseModel):
 
 
 # ==========================================================
+# AUTH ENDPOINTS
+# ==========================================================
+
+@app.post("/api/auth/register")
+def register_user(req: AuthRequest):
+    username = req.username.strip()
+    if not username or not req.password:
+        raise HTTPException(status_code=400, detail="Username e password sono obbligatori.")
+
+    users = _load_users()
+    for u in users:
+        if u.lower() == username.lower():
+            raise HTTPException(status_code=400, detail="Questo username è già registrato. Accedi con le tue credenziali.")
+
+    default_fan_wallet = os.getenv("FAN_ADDRESS", "rDrVhthSnhAv4YKUjskJ5v8KiQsQdeWG2P")
+    wallet = req.wallet_address.strip() if req.wallet_address and req.wallet_address.strip() else default_fan_wallet
+
+    users[username] = {
+        "username": username,
+        "password_hash": hashlib.sha256(req.password.encode()).hexdigest(),
+        "wallet_address": wallet,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    _save_users(users)
+
+    return {
+        "status": "success",
+        "message": "Registrazione completata con successo!",
+        "username": username,
+        "wallet_address": wallet,
+    }
+
+
+@app.post("/api/auth/login")
+def login_user(req: AuthRequest):
+    username = req.username.strip()
+    if not username or not req.password:
+        raise HTTPException(status_code=400, detail="Inserisci sia username che password.")
+
+    users = _load_users()
+    matched_user = None
+    for u, data in users.items():
+        if u.lower() == username.lower():
+            matched_user = data
+            break
+
+    if not matched_user:
+        raise HTTPException(status_code=401, detail="Account non trovato. Clicca su 'Registrati' per crearne uno nuovo.")
+
+    pwd_hash = hashlib.sha256(req.password.encode()).hexdigest()
+    if matched_user["password_hash"] != pwd_hash:
+        raise HTTPException(status_code=401, detail="Password errata. Riprova.")
+
+    default_fan_wallet = os.getenv("FAN_ADDRESS", "rDrVhthSnhAv4YKUjskJ5v8KiQsQdeWG2P")
+    return {
+        "status": "success",
+        "username": matched_user["username"],
+        "wallet_address": matched_user.get("wallet_address", default_fan_wallet),
+    }
+
+
+# ==========================================================
 # FAN ENDPOINTS
 # ==========================================================
 
@@ -78,7 +169,15 @@ def connect_fan(
     streamed_artists = simulate_user_streams(username, n_artists=n_artists)
     is_top_vector = compute_top_listener_vector(username, streamed_artists)
 
-    fan_wallet = os.getenv("FAN_ADDRESS", "rLhwa8Wu7r2D1cr3nPenB5ndrcUA9LvCFL")
+    users = _load_users()
+    matched_user = None
+    for u, data in users.items():
+        if u.lower() == username.lower():
+            matched_user = data
+            break
+
+    default_fan_wallet = os.getenv("FAN_ADDRESS", "rDrVhthSnhAv4YKUjskJ5v8KiQsQdeWG2P")
+    fan_wallet = matched_user.get("wallet_address", default_fan_wallet) if matched_user else default_fan_wallet
 
     if username not in USER_CARDS_DB:
         earned_cards = []
