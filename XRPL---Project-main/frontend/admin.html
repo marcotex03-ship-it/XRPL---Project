@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SuperFan - Platform Admin & 6-Month Pool Manager</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lobster+Two:ital,wght@1,700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #0f1117;
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 30px 15px;
+    }
+    .brand-font {
+      font-family: 'Lobster Two', cursive;
+      font-style: italic;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+    .admin-card {
+      background: #1e2230;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+    .metric-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    .metric-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+    .metric-label {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .table-dark-custom {
+      background: #181b26;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .table-dark-custom th {
+      background-color: #262c3e;
+      color: #cbd5e1;
+      font-weight: 600;
+      border: none;
+    }
+    .table-dark-custom td {
+      border-color: rgba(255, 255, 255, 0.05);
+      vertical-align: middle;
+    }
+    .btn-xrpl {
+      background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+      border: none;
+      color: white;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .btn-xrpl:hover {
+      background: linear-gradient(135deg, #0369a1 0%, #1d4ed8 100%);
+      color: white;
+      transform: translateY(-1px);
+    }
+    .log-terminal {
+      background: #090a0f;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 15px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      color: #4ade80;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container" style="max-width: 1100px;">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+      <div>
+        <h1 class="brand-font mb-0" style="font-size: 2.4rem;">SuperFan Admin</h1>
+        <p class="text-secondary mb-0 small">Semi-Annual 6-Month NFT Card Pool Manager & XRPL Testnet Minter</p>
+      </div>
+      <div>
+        <a href="/" class="btn btn-outline-light rounded-pill px-4 fw-semibold">
+          ← Switch to Fan App
+        </a>
+      </div>
+    </div>
+
+    <!-- Metrics Row -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-3 col-6">
+        <div class="metric-box">
+          <div class="metric-value" id="val-total">0</div>
+          <div class="metric-label">Total Minted</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="metric-box">
+          <div class="metric-value text-success" id="val-available">0</div>
+          <div class="metric-label">Available in Vault</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="metric-box">
+          <div class="metric-value text-warning" id="val-assigned">0</div>
+          <div class="metric-label">Assigned to Fans</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="metric-box">
+          <div class="metric-value text-danger" id="val-redeemed">0</div>
+          <div class="metric-label">Redeemed & Burned</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Execution Terminal -->
+    <div class="admin-card">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="fw-bold mb-0 text-white">⚡ XRPL Testnet Minting Activity Log</h5>
+        <button class="btn btn-sm btn-outline-secondary" onclick="clearLog()">Clear Log</button>
+      </div>
+      <div id="terminal-log" class="log-terminal">
+        [SYSTEM READY] Connected to XRPL Testnet (https://s.altnet.rippletest.net:51234)<br>
+        [INFO] Ready to pre-generate 6-month NFT Card pools based on Spotify metrics.
+      </div>
+    </div>
+
+    <!-- Spotify Artists & Pool Generation Table -->
+    <div class="admin-card">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h4 class="fw-bold text-white mb-1">Spotify Artists & Semi-Annual Pools</h4>
+          <p class="small text-secondary mb-0">Spotify provides the eligible listener numbers; click to pre-mint the NFT pool on XRPL.</p>
+        </div>
+        <button class="btn btn-outline-info btn-sm rounded-pill px-3" onclick="loadArtists()">
+          ↻ Refresh Metrics
+        </button>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-dark table-dark-custom align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Artist</th>
+              <th>Artist Threshold</th>
+              <th>Spotify Listeners in %</th>
+              <th>Pool (Avail / Total)</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody id="artists-table-body">
+            <tr>
+              <td colspan="5" class="text-center py-4 text-secondary">Loading artist metrics from Spotify database...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BACKEND_URL = window.location.origin;
+
+    function log(msg) {
+      const term = document.getElementById("terminal-log");
+      const time = new Date().toLocaleTimeString();
+      term.innerHTML += `<br>[${time}] ${msg}`;
+      term.scrollTop = term.scrollHeight;
+    }
+
+    function clearLog() {
+      document.getElementById("terminal-log").innerHTML = "[LOG CLEARED]";
+    }
+
+    async function loadArtists() {
+      try {
+        const [artistsRes, poolRes] = await Promise.all([
+          fetch(`${BACKEND_URL}/api/admin/artists`),
+          fetch(`${BACKEND_URL}/api/admin/pool/status`)
+        ]);
+
+        const artistsData = await artistsRes.json();
+        const poolData = await poolRes.json();
+
+        // Update top metrics
+        document.getElementById("val-total").innerText = poolData.total_cards;
+        document.getElementById("val-available").innerText = poolData.available_cards;
+        document.getElementById("val-assigned").innerText = poolData.assigned_cards;
+        document.getElementById("val-redeemed").innerText = poolData.redeemed_cards;
+
+        // Render table
+        const tbody = document.getElementById("artists-table-body");
+        tbody.innerHTML = "";
+
+        artistsData.artists.forEach(a => {
+          const row = `
+            <tr>
+              <td class="fw-bold text-white">${a.name}</td>
+              <td><span class="badge bg-secondary">Top ${a.chosen_percentage}%</span></td>
+              <td><span class="badge bg-dark border border-secondary">${a.listeners_in_percentile.toLocaleString()} fans</span></td>
+              <td>
+                <span class="badge ${a.pool_available > 0 ? 'bg-success' : 'bg-warning text-dark'}">
+                  ${a.pool_available} / ${a.pool_total}
+                </span>
+              </td>
+              <td class="text-end">
+                <button class="btn btn-xrpl btn-sm rounded-pill px-3" onclick="generatePool('${a.name.replace(/'/g, "\\'")}')">
+                  ⚡ Pre-Mint 2 Cards
+                </button>
+              </td>
+            </tr>
+          `;
+          tbody.insertAdjacentHTML("beforeend", row);
+        });
+
+      } catch (e) {
+        log(`<span class="text-danger">Failed to load data from backend: ${e.message}</span>`);
+      }
+    }
+
+    async function generatePool(artistName) {
+      log(`Starting XRPL batch mint for <b>${artistName}</b> (2 Soulbound cards, 180 days validity)...`);
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/admin/pool/generate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ artist_name: artistName, count: 2 })
+        });
+
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        const data = await res.json();
+
+        log(`<span class="text-success">✔ Successfully minted ${data.minted_count} Soulbound NFTs for ${artistName}!</span>`);
+        data.cards.forEach(c => {
+          log(`  → Token ID: <a href="${c.explorer_url}" target="_blank" class="text-info">${c.nft_id.substring(0, 24)}...</a>`);
+        });
+
+        loadArtists();
+      } catch (e) {
+        log(`<span class="text-danger">Minting error: ${e.message}</span>`);
+      }
+    }
+
+    // Auto load on open
+    window.addEventListener("DOMContentLoaded", loadArtists);
+  </script>
+</body>
+</html>

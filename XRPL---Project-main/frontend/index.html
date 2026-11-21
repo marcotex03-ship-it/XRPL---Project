@@ -110,14 +110,15 @@
       <h4 class="mb-0 brand-font" style="font-size: 2.3rem;">SuperFan</h4>
     </div>
 
-    <!-- Main Header (Spotify & Dashboard steps: Left: SuperFan | Center: Logo | Right: Username) -->
+    <!-- Main Header (Spotify & Dashboard steps: Left: SuperFan | Center: Logo | Right: Username + Admin) -->
     <div id="header-principale" class="align-items-center justify-content-between mb-3 pt-1" style="display: none;">
       <div class="brand-font" style="flex: 1; font-size: 1.75rem; line-height: 1;">SuperFan</div>
       <div class="text-center" style="flex: 1;">
         <img id="header-center-logo" src="18821-removebg-preview.png" alt="SuperFan Logo" style="height: 34px; width: auto; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1)); display: none;">
       </div>
       <div class="text-end" style="flex: 1;">
-        <span id="display-username" class="badge bg-dark text-white rounded-pill px-2 py-1 text-truncate" style="max-width: 110px;">@user</span>
+        <span id="display-username" class="badge bg-dark text-white rounded-pill px-2 py-1 text-truncate" style="max-width: 90px;">@user</span>
+        <a href="/admin" class="badge bg-info text-dark text-decoration-none rounded-pill px-2 py-1 ms-1">⚙️ Admin</a>
       </div>
     </div>
 
@@ -246,7 +247,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    const BACKEND_URL = "http://localhost:3000";
+    const BACKEND_URL = window.location.origin.includes('http') ? window.location.origin : "http://localhost:8000";
     let currentArtistName = "";
     let negozioModal = null;
     let allArtists = [];
@@ -347,18 +348,23 @@
 
       artisti.forEach(artista => {
         const fotoUrl = artista.image || artistPhotos[artista.name] || defaultPhoto;
+        const shortNftId = artista.nft_id ? (artista.nft_id.length > 20 ? artista.nft_id.substring(0, 18) + '...' : artista.nft_id) : 'Pending';
 
         const cardHTML = `
           <div class="vip-card">
             <div class="artist-banner">
               <img src="${fotoUrl}" alt="${artista.name}">
               <div class="artist-overlay">
-                <div class="d-flex justify-content-start align-items-center">
+                <div class="d-flex justify-content-between align-items-center">
                   <span class="glass-badge text-white">★ TOP ${artista.percentage}% FAN</span>
+                  ${artista.explorer_url ? `<a href="${artista.explorer_url}" target="_blank" class="badge bg-info text-dark text-decoration-none">🔗 XRPL Verified</a>` : ''}
                 </div>
                 <div>
                   <h2 class="fw-bold mb-0">${artista.name}</h2>
-                  <small class="text-light opacity-75">Official Loyalty Pass • Valid until 12/31/26</small>
+                  <div class="d-flex justify-content-between align-items-center mt-1">
+                    <small class="text-light opacity-75">Soulbound Pass • Valid 6 Months</small>
+                    <small class="text-white-50 font-monospace" style="font-size: 0.65rem;">${shortNftId}</small>
+                  </div>
                 </div>
               </div>
             </div>
@@ -391,22 +397,48 @@
       negozioModal.show();
     }
 
-    function generaCodice(tipo) {
-      const artistPrefix = currentArtistName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6) || "VIP";
-      const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+    async function generaCodice(tipo) {
+      const username = document.getElementById('display-username').innerText.replace('@', '').trim() || "guest";
+      const boxId = tipo === 'merch' ? 'box-codice-merch' : 'box-codice-ticketmaster';
+      const inputId = tipo === 'merch' ? 'valore-codice-merch' : 'valore-codice-ticketmaster';
+      const otherBoxId = tipo === 'merch' ? 'box-codice-ticketmaster' : 'box-codice-merch';
 
-      if (tipo === 'merch') {
-        document.getElementById('box-codice-ticketmaster').style.display = 'none';
-        document.getElementById('btn-copia-merch').innerText = "Copy";
-        document.getElementById('valore-codice-merch').value = `${artistPrefix}-MERCH10-${randomPart}`;
-        document.getElementById('link-partner-merch').href = `https://www.google.com/search?q=${encodeURIComponent(currentArtistName + " official merch store")}`;
-        document.getElementById('box-codice-merch').style.display = 'block';
-      } else {
-        document.getElementById('box-codice-merch').style.display = 'none';
-        document.getElementById('btn-copia-ticketmaster').innerText = "Copy";
-        document.getElementById('valore-codice-ticketmaster').value = `TM-${artistPrefix}-${randomPart}`;
-        document.getElementById('link-partner-ticketmaster').href = `https://www.ticketmaster.com/search?q=${encodeURIComponent(currentArtistName)}`;
-        document.getElementById('box-codice-ticketmaster').style.display = 'block';
+      document.getElementById(otherBoxId).style.display = 'none';
+      const inputElem = document.getElementById(inputId);
+      inputElem.value = "Burning NFT on XRPL...";
+      document.getElementById(boxId).style.display = 'block';
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/fan/redeem`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: username,
+            artist_name: currentArtistName,
+            perk_type: tipo
+          })
+        });
+
+        if (!res.ok) throw new Error(`Redemption failed: ${res.status}`);
+        const data = await res.json();
+
+        inputElem.value = data.code;
+        if (tipo === 'merch') {
+          document.getElementById('link-partner-merch').href = `https://www.google.com/search?q=${encodeURIComponent(currentArtistName + " official merch store")}`;
+        } else {
+          document.getElementById('link-partner-ticketmaster').href = `https://www.ticketmaster.com/search?q=${encodeURIComponent(currentArtistName)}`;
+        }
+
+        // Update active collection: the card vanishes from the user's wallet and screen!
+        allArtists = data.remaining_artists;
+        renderCarte(allArtists);
+
+      } catch (err) {
+        console.error("Redemption error:", err);
+        // Fallback promo code in case backend is offline
+        const artistPrefix = currentArtistName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 6) || "VIP";
+        const randomPart = Math.random().toString(36).substring(2, 6).toUpperCase();
+        inputElem.value = tipo === 'merch' ? `${artistPrefix}-MERCH10-${randomPart}` : `TM-${artistPrefix}-${randomPart}`;
       }
     }
 
