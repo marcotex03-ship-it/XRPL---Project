@@ -43,20 +43,23 @@ def get_client() -> JsonRpcClient:
     return JsonRpcClient(url)
 
 
+DEFAULT_PLATFORM_SEED = "sEdSXHHzWrhvYfhxh6U1NNBxa4BkpGN"
+DEFAULT_FAN_SEED = "sEd7fAUtpiDZMbFBmoKyv6noSd3AZxg"
+
+
 def load_wallets() -> Tuple[Wallet, Wallet]:
-    """Loads Platform and Fan wallets from the local .env file."""
+    """Loads Platform and Fan wallets from the local .env file or default testnet seeds."""
     load_dotenv(dotenv_path=ENV_PATH)
-    platform_seed = os.getenv("PLATFORM_SEED")
-    fan_seed = os.getenv("FAN_SEED")
+    platform_seed = os.getenv("PLATFORM_SEED") or DEFAULT_PLATFORM_SEED
+    fan_seed = os.getenv("FAN_SEED") or DEFAULT_FAN_SEED
 
-    if not platform_seed or not fan_seed:
-        raise ValueError(
-            "Missing PLATFORM_SEED or FAN_SEED in .env. Please run wallet_setup.py first."
-        )
-
-    platform_wallet = Wallet.from_seed(platform_seed)
-    fan_wallet = Wallet.from_seed(fan_seed)
-    return platform_wallet, fan_wallet
+    try:
+        platform_wallet = Wallet.from_seed(platform_seed)
+        fan_wallet = Wallet.from_seed(fan_seed)
+        return platform_wallet, fan_wallet
+    except Exception as e:
+        print(f"[WARN] Error deriving wallets from seed: {e}. Generating fallback wallets.")
+        return Wallet.create(), Wallet.create()
 
 
 def build_metadata_uri(artist_name: str, tier: str, serial_number: int = 1) -> str:

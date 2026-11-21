@@ -340,12 +340,16 @@ def admin_generate_pool(req: PoolGenerateRequest):
     if req.artist_name not in ARTISTS_DB:
         raise HTTPException(status_code=400, detail=f"Artist '{req.artist_name}' not in Spotify database")
 
-    result = generate_artist_pool(
-        artist_name=req.artist_name,
-        count=req.count,
-        validity_days=180,
-    )
-    return result
+    try:
+        result = generate_artist_pool(
+            artist_name=req.artist_name,
+            count=req.count,
+            validity_days=180,
+        )
+        return result
+    except Exception as e:
+        print(f"[ERROR] generate_artist_pool error: {e}")
+        raise HTTPException(status_code=500, detail=f"Minting error: {e}")
 
 
 @app.get("/admin")
