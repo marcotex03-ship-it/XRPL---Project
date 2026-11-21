@@ -77,7 +77,7 @@ The demonstration consists of two interconnected interfaces: the Admin Panel (is
 1. Open a new browser tab and navigate to:
    http://localhost:8000
 2. Log in using the default test account:
-   - Username: isa
+   - Username: user
    - Password: bari
    (You can also click "Register" to create a new fan profile).
 3. Click "Connect Spotify". The simulator calculates streaming metrics and checks if the user qualifies as a Top Fan.
