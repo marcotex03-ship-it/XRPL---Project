@@ -136,11 +136,11 @@ def claim_card_from_pool(
     artist_name: str,
     fan_username: str,
     fan_address: Optional[str] = None,
-) -> Dict[str, Any]:
+) -> Optional[Dict[str, Any]]:
     """
     Assigns a pre-minted card from the pool to an eligible fan upon login.
-    If no pre-minted card is available in the pool, dynamically mints one
-    to ensure zero interruption during hackathon live presentations.
+    Strictly assigns ONLY cards that are in 'AVAILABLE' status (pre-minted by Admin).
+    Returns None if no available card exists in the pool for this artist.
 
     Args:
         artist_name: Name of the artist.
@@ -148,13 +148,31 @@ def claim_card_from_pool(
         fan_address: Classic XRPL address of the fan. If None, loaded from .env.
 
     Returns:
-        Dict representing the assigned card.
+        Dict representing the assigned card, or None if no card is AVAILABLE.
     """
     load_dotenv(dotenv_path=ENV_PATH)
     target_address = fan_address or os.getenv("FAN_ADDRESS")
     pool = _load_pool()
 
-    # Look for an available card for this artist
+    # 1. Check if the fan already holds an assigned card for this artist
+    for card in pool:
+        if (
+            card.get("artist") == artist_name
+            and card.get("assigned_to") == fan_username
+            and card.get("status") == "ASSIGNED"
+        ):
+            return {
+                "nft_id": card["nft_id"],
+                "name": artist_name,
+                "percentage": card["percentage"],
+                "serial": card.get("serial", 1),
+                "expiry_date": card["expiry_date"],
+                "explorer_url": card["explorer_url"],
+                "status": "ASSIGNED",
+                "source": "pool",
+            }
+
+    # 2. Look for an available card for this artist with status AVAILABLE
     available_card = None
     for card in pool:
         if card.get("artist") == artist_name and card.get("status") == "AVAILABLE":
@@ -182,44 +200,9 @@ def claim_card_from_pool(
             "source": "pool",
         }
     else:
-        # Pool empty: on-demand minting fallback
-        artist_info = ARTISTS_DB.get(artist_name, {"chosen_percentage": 1.0, "listeners_in_percentile": 2000})
-        pct = artist_info.get("chosen_percentage", 1.0)
-        metadata_uri = build_metadata_uri(artist_name, f"Top {pct}% Listener", 1)
-
-        result = issue_card_for_fan(
-            fan_address=target_address,
-            metadata_uri=metadata_uri,
-            validity_days=180,
-        )
-
-        card_entry = {
-            "nft_id": result["nft_id"],
-            "artist": artist_name,
-            "percentage": pct,
-            "serial": 1,
-            "status": "ASSIGNED",
-            "created_at": result["issue_date"],
-            "expiry_date": result["expiry_date"],
-            "assigned_to": fan_username,
-            "assigned_wallet": target_address,
-            "assigned_at": now,
-            "metadata_uri": metadata_uri,
-            "explorer_url": result["explorer_url"],
-        }
-        pool.append(card_entry)
-        _save_pool(pool)
-
-        return {
-            "nft_id": result["nft_id"],
-            "name": artist_name,
-            "percentage": pct,
-            "serial": 1,
-            "expiry_date": result["expiry_date"],
-            "explorer_url": result["explorer_url"],
-            "status": "ASSIGNED",
-            "source": "live_mint",
-        }
+        # No pre-minted card in AVAILABLE status: do NOT mint dynamically
+        print(f"[POOL] Nessuna carta AVAILABLE trovata nel pool per '{artist_name}'. Richiede prima il mint dall'Admin.")
+        return None
 
 
 def get_pool_status() -> Dict[str, Any]:

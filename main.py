@@ -179,42 +179,39 @@ def connect_fan(
     default_fan_wallet = os.getenv("FAN_ADDRESS", "rDrVhthSnhAv4YKUjskJ5v8KiQsQdeWG2P")
     fan_wallet = matched_user.get("wallet_address", default_fan_wallet) if matched_user else default_fan_wallet
 
-    if username not in USER_CARDS_DB:
-        earned_cards = []
-        for entry, is_eligible in zip(streamed_artists, is_top_vector):
-            if is_eligible:
-                artist_name = entry["name"]
-                pct = ARTISTS_DB[artist_name]["chosen_percentage"]
+    current_cards = USER_CARDS_DB.get(username, [])
+    already_owned_artists = {c["name"] for c in current_cards}
 
-                # Claim card from pool or dynamically mint on XRPL Testnet
-                try:
-                    card_data = claim_card_from_pool(
-                        artist_name=artist_name,
-                        fan_username=username,
-                        fan_address=fan_wallet,
-                    )
-                    nft_id = card_data["nft_id"]
-                    explorer_url = card_data["explorer_url"]
-                    expiry_date = card_data["expiry_date"]
-                except Exception as e:
-                    print(f"[WARN] XRPL mint fallback due to: {e}")
-                    fake_hex = "".join(random.choices("0123456789ABCDEF", k=16))
-                    nft_id = f"NFT-{fake_hex}"
-                    explorer_url = f"https://testnet.xrpscan.com"
-                    expiry_date = "2027-05-21T00:00:00"
+    for entry, is_eligible in zip(streamed_artists, is_top_vector):
+        if is_eligible:
+            artist_name = entry["name"]
+            pct = ARTISTS_DB[artist_name]["chosen_percentage"]
 
-                earned_cards.append({
+            if artist_name in already_owned_artists:
+                continue
+
+            # Assegna la carta dal pool SOLO se in stato AVAILABLE (pre-mintata dall'admin)
+            card_data = claim_card_from_pool(
+                artist_name=artist_name,
+                fan_username=username,
+                fan_address=fan_wallet,
+            )
+
+            if card_data:
+                current_cards.append({
                     "name": artist_name,
                     "percentage": pct,
                     "streams": entry["streams"],
                     "pool_size": ARTISTS_DB[artist_name]["listeners_in_percentile"],
-                    "nft_id": nft_id,
-                    "explorer_url": explorer_url,
-                    "expiry_date": expiry_date,
+                    "nft_id": card_data["nft_id"],
+                    "explorer_url": card_data.get("explorer_url", "https://testnet.xrpscan.com"),
+                    "expiry_date": card_data.get("expiry_date", "2027-05-21T00:00:00"),
                     "wallet": fan_wallet,
                 })
+            else:
+                print(f"[POOL] '{artist_name}' idoneo su Spotify, ma nessun NFT disponibile nel pool. Richiede prima il mint dall'Admin.")
 
-        USER_CARDS_DB[username] = earned_cards
+    USER_CARDS_DB[username] = current_cards
 
     return {
         "username": username,
